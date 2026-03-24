@@ -1,63 +1,50 @@
 import java.util.*;
 
-class Reservation {
-    String guestName;
-    String roomType;
-    String roomId;
-
-    Reservation(String guestName, String roomType, String roomId) {
-        this.guestName = guestName;
-        this.roomType = roomType;
-        this.roomId = roomId;
+class InvalidBookingException extends Exception {
+    InvalidBookingException(String message) {
+        super(message);
     }
 }
 
-class BookingHistory {
-    private List<Reservation> history = new ArrayList<>();
+class RoomInventory {
+    private Map<String, Integer> inventory = new HashMap<>();
 
-    void add(Reservation r) {
-        history.add(r);
+    RoomInventory() {
+        inventory.put("Single Room", 2);
+        inventory.put("Double Room", 1);
+        inventory.put("Suite Room", 0);
     }
 
-    List<Reservation> getAll() {
-        return history;
-    }
-}
-
-class BookingReportService {
-    void displayAll(List<Reservation> history) {
-        for (Reservation r : history) {
-            System.out.println(r.guestName + " -> " + r.roomType + " (" + r.roomId + ")");
+    void validate(String roomType) throws InvalidBookingException {
+        if (!inventory.containsKey(roomType)) {
+            throw new InvalidBookingException("Invalid room type");
+        }
+        if (inventory.get(roomType) <= 0) {
+            throw new InvalidBookingException("No rooms available for " + roomType);
         }
     }
 
-    void summary(List<Reservation> history) {
-        Map<String, Integer> count = new HashMap<>();
-
-        for (Reservation r : history) {
-            count.put(r.roomType, count.getOrDefault(r.roomType, 0) + 1);
-        }
-
-        System.out.println("\nSummary:");
-        for (String type : count.keySet()) {
-            System.out.println(type + ": " + count.get(type));
-        }
+    void book(String roomType) {
+        inventory.put(roomType, inventory.get(roomType) - 1);
     }
 }
 
 public class BookMyStayApp {
     public static void main(String[] args) {
-        BookingHistory history = new BookingHistory();
+        RoomInventory inventory = new RoomInventory();
 
-        history.add(new Reservation("Amit", "Single Room", "SR1"));
-        history.add(new Reservation("Neha", "Double Room", "DR1"));
-        history.add(new Reservation("Rahul", "Single Room", "SR2"));
+        String[] requests = {"Single Room", "Suite Room", "Luxury Room"};
 
-        BookingReportService report = new BookingReportService();
+        System.out.println("Hotel Booking System v9.1\n");
 
-        System.out.println("Hotel Booking System v8.1\n");
-
-        report.displayAll(history.getAll());
-        report.summary(history.getAll());
+        for (String roomType : requests) {
+            try {
+                inventory.validate(roomType);
+                inventory.book(roomType);
+                System.out.println("Booking confirmed for " + roomType);
+            } catch (InvalidBookingException e) {
+                System.out.println("Booking failed: " + e.getMessage());
+            }
+        }
     }
 }
